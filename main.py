@@ -21,7 +21,7 @@ def get_year_type(number: int) -> str:
     return "лет"
 
 
-def get_wine_catalog(file_path: str, sheet_name: str = 'Лист1') -> dict:
+def get_wine_catalog(file_path: str, sheet_name: str | int = 0) -> dict:
 
     df = pandas.read_excel(file_path,
                            sheet_name=sheet_name,
@@ -35,7 +35,7 @@ def get_wine_catalog(file_path: str, sheet_name: str = 'Лист1') -> dict:
     return catalog
 
 
-def render_page(file_path: str) -> None:
+def render_page(file_path: str, sheet_name: str | int) -> None:
 
     env = Environment(loader=FileSystemLoader('.'),
                       autoescape=select_autoescape(['html', 'xml']))
@@ -47,7 +47,7 @@ def render_page(file_path: str) -> None:
     age = current_year - launch_year
     year_type = get_year_type(age)
 
-    wines = get_wine_catalog(file_path)
+    wines = get_wine_catalog(file_path, sheet_name=sheet_name)
 
     rendered_page = template.render(
         age=age,
@@ -67,9 +67,15 @@ def main():
         default="wine.xlsx",
         help="Path to the Excel file with wine data (default: wine3.xlsx)",
     )
+    parser.add_argument(
+        "--sheet",
+        default=0,
+        help="Name or index of the Excel sheet to read (default: 0 - first sheet)",
+    )
+
     args = parser.parse_args()
 
-    render_page(args.file)
+    render_page(args.file, args.sheet)
 
     server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
     server.serve_forever()
